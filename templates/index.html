@@ -74,6 +74,7 @@
         </div>
     </form>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
     <script>
         function copyText() {
             // Get the text from the textarea
@@ -87,6 +88,17 @@
             // Alert the user that the text has been copied
             alert("Text copied to clipboard");
         }
+
+        // WebSocket connection for real-time updates
+        const socket = io();
+        const textarea = document.getElementById('pasteContent');
+
+        socket.on('content_update', function(data) {
+            // Only update if user is not currently editing
+            if (document.activeElement !== textarea) {
+                textarea.value = data.content;
+            }
+        });
     </script>
 </body>
 </html>

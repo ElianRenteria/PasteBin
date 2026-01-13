@@ -1,7 +1,10 @@
 from flask import Flask, request, render_template, redirect, url_for
+from flask_socketio import SocketIO, emit
 import sqlite3
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-secret-key'
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Database helper function to get the current text
 def get_current_text():
@@ -38,10 +41,17 @@ def index():
         new_content = request.form['content']
         if new_content.strip():  # Ensure it's not empty
             save_text(new_content)
+            socketio.emit('content_update', {'content': new_content})
         return redirect(url_for('index'))  # Reload the page after submitting
-    
+
     current_text = get_current_text()
     return render_template('index.html', current_text=current_text)
 
+# WebSocket event to get current content when client connects
+@socketio.on('connect')
+def handle_connect():
+    current_text = get_current_text()
+    emit('content_update', {'content': current_text})
+
 if __name__ == '__main__':
-    app.run(debug=False, port=8000)
+    socketio.run(app, debug=False, port=8000, allow_unsafe_werkzeug=True)
